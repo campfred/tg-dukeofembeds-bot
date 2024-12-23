@@ -1,4 +1,5 @@
 import { LinkConverter } from "../types/types.ts";
+import { fetchPageTitle } from "../utils.ts";
 
 export class SimpleLinkConverter implements LinkConverter {
 	readonly name: string;
@@ -98,9 +99,12 @@ export class SimpleLinkConverter implements LinkConverter {
 	 * @param link Link to convert.
 	 * @returns Converted link.
 	 */
-	public async parseLink(link: URL): Promise<URL | null> {
+	public async parseLink(link: URL): Promise<[URL, string] | null> {
 		if (!this.enabled) throw new Error("Map is disabled.");
 
-		return this.convertLink(SimpleLinkConverter.cleanLink(SimpleLinkConverter.filterOutSubdomains(await SimpleLinkConverter.expandLink(link))));
+		const link: URL = await this.convertLink(SimpleLinkConverter.cleanLink(SimpleLinkConverter.filterOutSubdomains(await SimpleLinkConverter.expandLink(link))));
+  const title: string = await fetchPageTitle(link)
+
+		return [link, title]
 	}
 }
