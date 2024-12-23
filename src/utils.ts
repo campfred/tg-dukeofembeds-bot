@@ -1,4 +1,5 @@
 import { CallbackQueryContext, CommandContext, HearsContext, InlineQueryContext } from "https://deno.land/x/grammy@v1.32.0/context.ts";
+import { DOMParser } from "https://deno.land/x/deno_dom/deno-dom-wasm.ts";
 import { CustomContext, LinkConverter } from "./types/types.ts";
 import { SimpleLinkConverter } from "./converters/simple.ts";
 import { APIbasedLinkConverter } from "./converters/music.ts";
@@ -21,6 +22,25 @@ export function findMatchingConverter(url: URL, simple_converters: SimpleLinkCon
 	console.debug(`Didn't find a matching simple link converter. :(`);
 
 	return null;
+}
+
+export async function fetchPageTitle(url: string): Promise<string | null> {
+  try {
+    // Fetch the HTML content of the URL
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Failed to fetch ${url}: ${response.status}`);
+
+    // Get the text content
+    const html = await response.text();
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    
+    // Extract title
+    const title = doc?.querySelector("title")?.textContent;
+    return title;
+  } catch (error) {
+    console.error("Error fetching page title:", error);
+    return null;
+  }
 }
 
 export function getExpeditorDebugString(ctx: CommandContext<CustomContext> | HearsContext<CustomContext> | InlineQueryContext<CustomContext> | CallbackQueryContext<CustomContext>): string {
