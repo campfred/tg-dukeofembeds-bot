@@ -54,16 +54,16 @@ async function processConversionRequest(ctx: CommandContext<CustomContext> | Hea
 	// Check if link matches in map
 	await ctx.react("🤔");
 	const url: URL = new URL(ctx.match.toString());
-	const matchingMap: SimpleLinkConverter | null = findMatchingConverter(url, config_manager.Simple_Converters, config_manager.API_Converters);
+	const matchingMap: LinkConverter | null = findMatchingConverter(url, config_manager.Simple_Converters, config_manager.API_Converters);
 	if (matchingMap) {
 		console.debug("Found the following match : " + matchingMap?.name);
-		const linkConverted: URL | null = await matchingMap.parseLink(new URL(ctx.match.toString()));
+		const linkConverted: [URL, string] | null = await matchingMap.parseLink(new URL(ctx.match.toString()));
 		if (linkConverted)
-			if (linkConverted.toString() === SimpleLinkConverter.cleanLink(new URL(ctx.match.toString())).toString() && ctx.chat.type === "private")
+			if (linkConverted[0].toString() === SimpleLinkConverter.cleanLink(new URL(ctx.match.toString())).toString() && ctx.chat.type === "private")
 				ctx.reply(`Hmm… That link already looks fine to me. 🤔`, { reply_parameters: { message_id: ctx.msgId } });
 			else {
 				await ctx.react("👀");
-				await ctx.reply(linkConverted.toString(), { reply_parameters: { message_id: ctx.msgId }, link_preview_options: { show_above_text: true } });
+				await ctx.reply(linkConverted[0].toString(), { reply_parameters: { message_id: ctx.msgId }, link_preview_options: { show_above_text: true } });
 			}
 		else
 			ctx.reply(
@@ -178,9 +178,10 @@ BOT.inlineQuery(getOriginRegExes(), async function (ctx) {
 	const url: URL = new URL(ctx.match.toString());
 	const converter: LinkConverter | null = findMatchingConverter(url, config_manager.Simple_Converters, config_manager.API_Converters);
 	if (converter != null) {
-		const converted_link: URL | null = await converter.parseLink(new URL(link));
+		const converted_link: [URL, string] | null = await converter.parseLink(new URL(link));
 		if (converted_link) {
-			const response: string = converted_link.toString();
+			const response: string = converted_link[0].toString();
+			// TODO Show title in query result
 			ctx.answerInlineQuery([InlineQueryResultBuilder.article(converter.name, `Convert ${converter.name} link ✨`).text(response, { link_preview_options: { show_above_text: true } })]);
 		}
 	} else ctx.answerInlineQuery([]);
